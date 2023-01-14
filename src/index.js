@@ -1,9 +1,17 @@
-import { fromEvent } from "rxjs";
+import { fromEvent, Subject } from 'rxjs';
+import WORDS_LIST from './wordsList.json'
+
 const letterRows = document.getElementsByClassName('letter-row');
 const onKeyDown$ = fromEvent(document, "keydown");
 let letterIndex=0;
 let letterRowIndex=0;
 let userAnswer=[];
+const getRandomWord=() => WORDS_LIST[Math.floor(Math.random()* WORDS_LIST.length)]
+let rigthWord = getRandomWord();
+console.log(rigthWord);
+
+const userWindOrLoose$ = new Subject();
+
 const insertLetter = {
   next: (event) => {
     const pressedKey = event.key;  
@@ -19,10 +27,18 @@ const insertLetter = {
 
 const checkWorld ={
   next: (event)=>{
-    event.key? 'Enter':false;
+    if(event.key =="Enter"){
+      if(userAnswer.join("") == rigthWord){
+        userWindOrLoose$.next("win");
+      }
+    }
     
   }
 }
 
 onKeyDown$.subscribe(insertLetter);
 onKeyDown$.subscribe(checkWorld);
+userWindOrLoose$.subscribe((value) =>{
+  let letterRowsWinned = Array.from(letterRows)[letterRowIndex];
+      console.log(letterRowsWinned);
+})
