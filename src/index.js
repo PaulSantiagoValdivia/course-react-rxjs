@@ -10,7 +10,7 @@ const observador ={
     console.log(value);
   },
   complete:() => {},
-  error:(error)=>{}
+  error:()=>{;}
 };
 
 observableAlfa$.subscribe(observador);
