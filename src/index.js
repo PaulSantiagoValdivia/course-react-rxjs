@@ -1,8 +1,8 @@
 import { fromEvent, Subject} from "rxjs";
 import WORDS_LIST from "./wordsList.json";
 
-
 const letterRows = document.getElementsByClassName("letter-row");
+const messageText = document.getElementById('message-text');
 const onKeyDown$ = fromEvent(document, "keydown");
 let letterIndex = 0;
 let letterRowIndex = 0;
@@ -27,11 +27,49 @@ const insertLetter = {
     }
   },
 };
+
 const checkWorld = {
   next: (event) => {
     if (event.key == "Enter") {
-      if (userAnswer.join("") == rigthWord) {
-        userWindOrLoose$.next("win");
+    
+      if (userAnswer.length !== 5) {
+        messageText.textContent = "¡Te faltan algunas letras!";
+        return; // <- Este return nos permite parar la ejecución del observable
+      }
+      
+      // También podemos cambiar el ciclo for/forEach/while en lugar de `userAnswer.map()`
+      // 😊 Iteramos sobre las letras en índices `[0, 1, 2, 3, 4]`:
+      userAnswer.map((_, i) => {
+        let letterColor = "";
+        let letterBox = letterRows[letterRowIndex].children[i];
+
+        // 🔍 Verificamos si la posición de la letra del usuario coincide con la posición correcta
+        // Si la letra no se encuentra, indexOf() devolverá -1 (ver línea 58)
+        // https://developer.mozilla.org/es/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
+        let letterPosition = rigthWord.indexOf(userAnswer[i]);
+
+        if (rigthWord[i] === userAnswer[i]) {
+          letterColor = "letter-green"; // Pintar de verde 🟩 si coincide letra[posición]
+        } else {
+          if (letterPosition === -1) {
+            letterColor = "letter-grey"; // Pintar de gris ⬜️ si no coincide letra o posición
+          } else {
+            letterColor = "letter-yellow"; // Pintar de amarillo 🟨 si coincide letra, pero no posición
+          }
+        }
+        letterBox.classList.add(letterColor);
+      });
+
+      // 🔄 Cuando se haya completado la palabra, permite escribir en la siguiente fila:
+      if (userAnswer.length === 5) {
+        letterIndex = 0;
+        userAnswer = [];
+        letterRowIndex++;
+      }
+
+      // 💚 Ganas el juego si la respuesta del usuario coincide con la palabra correcta
+      if (userAnswer.join("") === rigthWord) {
+        userWindOrLoose$.next();
       }
     }
   },
@@ -40,7 +78,7 @@ const checkWorld = {
 const delateLetter = {
   next: (event) => {
     const pressedKey = event.key;
-    if (pressedKey.length == 0 && pressedKey == 'Backspace') {
+    if (pressedKey === "Backspace" && pressedKey.length !== 0 ) {
       let currentRow = letterRows[letterRowIndex];
       let letterBox = currentRow.children[letterIndex-1]
       letterBox.textContent="";
@@ -54,6 +92,7 @@ const delateLetter = {
 onKeyDown$.subscribe(insertLetter);
 onKeyDown$.subscribe(checkWorld);
 onKeyDown$.subscribe(delateLetter);
+
 userWindOrLoose$.subscribe(() => {
   let letterRowsWinned = Array.from(letterRows)[letterRowIndex];
   console.log(letterRowsWinned);
